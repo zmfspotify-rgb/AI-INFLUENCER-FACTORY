@@ -37,6 +37,15 @@ set /p choice=Select option:
 if "%choice%"=="1" (
   echo Running content engine...
   python main.py
+  if errorlevel 1 (
+    echo Content engine failed. Check the console output above for details.
+    pause
+    goto menu
+  )
+  if exist outputs (
+    echo Opening generated outputs folder...
+    start "" "%cd%\outputs"
+  )
   pause
   goto menu
 )
