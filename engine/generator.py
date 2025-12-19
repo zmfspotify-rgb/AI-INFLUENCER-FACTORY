@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -139,8 +138,13 @@ def generate_content(
             )
 
         # Also keep plain-text prompt files for quick copy
+        script_text = (
+            platform_plans[0]["script_prompt"]
+            if platform_plans
+            else "No platform prompts configured."
+        )
         (influencer_dir / "script_prompt.txt").write_text(
-            platform_plans[0]["script_prompt"], encoding="utf-8"
+            script_text, encoding="utf-8"
         )
         (influencer_dir / "image_prompt.txt").write_text(image_prompt, encoding="utf-8")
         (influencer_dir / "video_prompt.txt").write_text(video_prompt, encoding="utf-8")
