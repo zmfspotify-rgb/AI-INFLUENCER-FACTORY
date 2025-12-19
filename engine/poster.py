@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 
 def _load_plan(plan_path: Path) -> Optional[dict]:
@@ -18,7 +18,7 @@ def _write_log(log_path: Path, entries: List[str]) -> None:
 
 
 def post_content(
-    generated: Optional[Iterable[Dict[str, str]]] = None, output_root: str = "outputs"
+    generated: Optional[Iterable[Dict[str, Any]]] = None, output_root: str = "outputs"
 ) -> None:
     """
     Simulate posting content by creating a scheduling log.

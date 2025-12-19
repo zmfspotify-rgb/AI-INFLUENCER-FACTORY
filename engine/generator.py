@@ -15,7 +15,7 @@ BASE_VIDEO_PROMPT = (
 )
 
 
-def _load_json(path: Path) -> Dict:
+def _load_json(path: Path) -> Dict[str, Any]:
     try:
         with path.open("r", encoding="utf-8") as handle:
             return json.load(handle)
