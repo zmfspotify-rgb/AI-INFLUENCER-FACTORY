@@ -1,20 +1,25 @@
 import json
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 
 def _load_plan(plan_path: Path) -> Optional[dict]:
     if not plan_path.exists():
         return None
-    with plan_path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+    try:
+        with plan_path.open("r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 def _write_log(log_path: Path, entries: List[str]) -> None:
     log_path.write_text("\n".join(entries), encoding="utf-8")
 
 
-def post_content(generated: Optional[Iterable[dict]] = None, output_root: str = "outputs") -> None:
+def post_content(
+    generated: Optional[Iterable[Dict[str, str]]] = None, output_root: str = "outputs"
+) -> None:
     """
     Simulate posting content by creating a scheduling log.
     In a full implementation this would automate Playwright uploads.
@@ -29,7 +34,9 @@ def post_content(generated: Optional[Iterable[dict]] = None, output_root: str = 
         # Discover plans from disk if not provided
         for child in out_root.iterdir():
             if child.is_dir():
-                plans.append({"plan_path": str(child / "plan.json"), "slug": child.name})
+                plan_path = child / "plan.json"
+                if plan_path.exists():
+                    plans.append({"plan_path": str(plan_path), "slug": child.name})
 
     for plan_meta in plans:
         plan_path = Path(plan_meta["plan_path"])

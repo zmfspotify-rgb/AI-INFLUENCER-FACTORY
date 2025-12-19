@@ -31,7 +31,8 @@ class InfluencerFlowTest(unittest.TestCase):
             plan = json.load(handle)
 
         self.assertEqual(plan.get("influencer"), "luna")
-        self.assertTrue(plan.get("platforms"), "Platforms missing from plan")
+        self.assertIsNotNone(plan.get("platforms"))
+        self.assertGreater(len(plan.get("platforms", [])), 0, "Platforms missing from plan")
         first_platform = plan["platforms"][0]
         self.assertIn("script_prompt", first_platform)
         self.assertIn("image_prompt", first_platform)

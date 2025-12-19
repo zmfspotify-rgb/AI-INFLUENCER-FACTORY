@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 BASE_IMAGE_PROMPT = (
@@ -16,8 +16,11 @@ BASE_VIDEO_PROMPT = (
 
 
 def _load_json(path: Path) -> Dict:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Unable to read JSON from {path}: {exc}") from exc
 
 
 def _discover_influencers(influencer_root: Path) -> List[Dict]:
@@ -29,22 +32,26 @@ def _discover_influencers(influencer_root: Path) -> List[Dict]:
         if not child.is_dir():
             continue
 
-        persona_path = child / "persona.json"
-        style_path = child / "style.json"
-        platforms_path = child / "platforms.json"
+        try:
+            persona_path = child / "persona.json"
+            style_path = child / "style.json"
+            platforms_path = child / "platforms.json"
 
-        if not (persona_path.exists() and style_path.exists() and platforms_path.exists()):
-            # skip incomplete influencer folders
+            if not (persona_path.exists() and style_path.exists() and platforms_path.exists()):
+                # skip incomplete influencer folders
+                continue
+
+            influencers.append(
+                {
+                    "slug": child.name,
+                    "persona": _load_json(persona_path),
+                    "style": _load_json(style_path),
+                    "platforms": _load_json(platforms_path),
+                }
+            )
+        except ValueError:
+            # Ignore malformed influencer folders
             continue
-
-        influencers.append(
-            {
-                "slug": child.name,
-                "persona": _load_json(persona_path),
-                "style": _load_json(style_path),
-                "platforms": _load_json(platforms_path),
-            }
-        )
     return influencers
 
 
@@ -107,11 +114,17 @@ def generate_content(
         influencer_dir = out_root / slug
         _ensure_dir(influencer_dir)
 
-        image_prompt = BASE_IMAGE_PROMPT + f", style: {style.get('visual', '')}"
-        video_prompt = BASE_VIDEO_PROMPT + f", style: {style.get('video', '')}"
+        visual_style = style.get("visual")
+        video_style = style.get("video")
+        image_prompt = (
+            f"{BASE_IMAGE_PROMPT}, style: {visual_style}" if visual_style else BASE_IMAGE_PROMPT
+        )
+        video_prompt = (
+            f"{BASE_VIDEO_PROMPT}, style: {video_style}" if video_style else BASE_VIDEO_PROMPT
+        )
         voice_prompt = _voice_prompt(persona)
 
-        platform_plans: List[Dict[str, Optional[str]]] = []
+        platform_plans: List[Dict[str, Any]] = []
         for platform_name, meta in platforms.items():
             length = meta.get("length", "60s")
             platform_topic = meta.get("focus", topic)
@@ -138,11 +151,12 @@ def generate_content(
             )
 
         # Also keep plain-text prompt files for quick copy
-        script_text = (
-            platform_plans[0]["script_prompt"]
-            if platform_plans
-            else "No platform prompts configured."
-        )
+        script_text = "No platform prompts configured."
+        if platform_plans:
+            script_text = "\n\n".join(
+                f"[{plan.get('platform')}] {plan.get('script_prompt', '')}"
+                for plan in platform_plans
+            )
         (influencer_dir / "script_prompt.txt").write_text(
             script_text, encoding="utf-8"
         )
