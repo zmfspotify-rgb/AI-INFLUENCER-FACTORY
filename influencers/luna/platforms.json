@@ -1,0 +1,17 @@
+{
+  "youtube": {
+    "genre": "AI Vlogs",
+    "length": "8 minutes",
+    "focus": "Day-in-the-life from an AI influencer perspective"
+  },
+  "tiktok": {
+    "genre": "Viral POV",
+    "length": "45s",
+    "focus": "Relatable humor moment with quick hook"
+  },
+  "instagram": {
+    "genre": "Lifestyle photos",
+    "length": "Caption + single shot",
+    "focus": "Soft influencer aesthetic with outfit transitions"
+  }
+}
